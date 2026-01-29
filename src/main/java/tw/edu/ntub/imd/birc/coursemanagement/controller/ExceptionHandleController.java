@@ -23,6 +23,9 @@ import tw.edu.ntub.imd.birc.coursemanagement.exception.ConvertPropertyException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.MethodNotSupportedException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.NullRequestBodyException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.RequiredParameterException;
+import tw.edu.ntub.imd.birc.coursemanagement.exception.NotFoundException;
+import tw.edu.ntub.imd.birc.coursemanagement.exception.DuplicateCreateException;
+import tw.edu.ntub.imd.birc.coursemanagement.exception.ConflictException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.file.FileNotExistException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.file.UploadFileTooLargeException;
 import tw.edu.ntub.imd.birc.coursemanagement.exception.form.InvalidFormDateFormatException;
@@ -41,6 +44,27 @@ import java.lang.reflect.Field;
 @Log4j2
 @ControllerAdvice
 public class ExceptionHandleController {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<String> handleNotFoundException(NotFoundException e) {
+        return ResponseEntityBuilder.error(e).status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @ExceptionHandler(DuplicateCreateException.class)
+    public ResponseEntity<String> handleDuplicateCreateException(DuplicateCreateException e) {
+        return ResponseEntityBuilder.error(e).status(HttpStatus.CONFLICT).build();
+    }
+
+    @ExceptionHandler(InvalidFormException.class)
+    public ResponseEntity<String> handleInvalidFormException(InvalidFormException e) {
+        return ResponseEntityBuilder.error(e).status(HttpStatus.BAD_REQUEST).build();
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<String> handleConflictException(
+            ConflictException e) {
+        return ResponseEntityBuilder.error(e).status(HttpStatus.CONFLICT).build();
+    }
+
     @ExceptionHandler(ProjectException.class)
     public ResponseEntity<String> handleProjectException(ProjectException e) {
         return ResponseEntityBuilder.error(e).build();
@@ -52,10 +76,12 @@ public class ExceptionHandleController {
 
         // 1. 處理基礎類型轉換錯誤 (如 String 轉 int 失敗) - 保持 Snippet 2 的簡潔
         if (rootCause instanceof NumberFormatException) {
-            return ResponseEntityBuilder.error(new InvalidFormNumberFormatException((NumberFormatException) rootCause)).build();
+            return ResponseEntityBuilder.error(new InvalidFormNumberFormatException((NumberFormatException) rootCause))
+                    .build();
         }
         if (rootCause instanceof ParseDateException) {
-            return ResponseEntityBuilder.error(new InvalidFormDateFormatException((ParseDateException) rootCause)).build();
+            return ResponseEntityBuilder.error(new InvalidFormDateFormatException((ParseDateException) rootCause))
+                    .build();
         }
 
         // 2. 處理 Jackson 解析錯誤 (主要邏輯)
@@ -86,7 +112,8 @@ public class ExceptionHandleController {
             // 情況一：數字錯誤
             if (isNumberTarget) {
                 String message = displayName + " - \"" + ex.getValue() + "\"輸入的文字中包含非數字文字";
-                return ResponseEntityBuilder.error(new InvalidRequestFormatException(message)).status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntityBuilder.error(new InvalidRequestFormatException(message))
+                        .status(HttpStatus.BAD_REQUEST).build();
             }
 
             // 情況二：Enum 錯誤
@@ -97,15 +124,17 @@ public class ExceptionHandleController {
                         .collect(java.util.stream.Collectors.joining(", "));
                 String message = displayName + " - \"" + ex.getValue() +
                         "\"不是有效的值，有效值為：[" + validValues + "]";
-                return ResponseEntityBuilder.error(new InvalidRequestFormatException(message)).status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntityBuilder.error(new InvalidRequestFormatException(message))
+                        .status(HttpStatus.BAD_REQUEST).build();
             }
 
             // 情況三：其他類型錯誤 (兜底)
-            return ResponseEntityBuilder.error(new InvalidRequestFormatException(ex.getOriginalMessage())).build();
+            return ResponseEntityBuilder.error(new InvalidRequestFormatException(ex.getOriginalMessage()))
+                    .status(HttpStatus.BAD_REQUEST).build();
         }
 
         // 3. 未知或 Body 為空
-        return ResponseEntityBuilder.error(new NullRequestBodyException(e)).build();
+        return ResponseEntityBuilder.error(new NullRequestBodyException(e)).status(HttpStatus.BAD_REQUEST).build();
     }
 
     private String getFieldDescription(Class<?> clazz, String fieldName) {
@@ -183,4 +212,3 @@ public class ExceptionHandleController {
         return ResponseEntityBuilder.error(new UnknownException(e)).build();
     }
 }
-
