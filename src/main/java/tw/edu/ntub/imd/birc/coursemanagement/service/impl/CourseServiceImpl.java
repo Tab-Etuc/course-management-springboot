@@ -71,7 +71,7 @@ public class CourseServiceImpl extends BaseServiceImpl<CourseBean, Course, Strin
         StudentCourse entity = new StudentCourse();
         entity.setStudentId(studentId);
         entity.setCourseId(courseId);
-        entity.setGrade(bean.getGrade() != null ? bean.getGrade() : 0);
+        entity.setGrade(bean.getGrade());
         entity.setRemark(bean.getRemark());
         entity.setCreateDate(LocalDateTime.now(java.time.ZoneId.of("Asia/Taipei")));
 

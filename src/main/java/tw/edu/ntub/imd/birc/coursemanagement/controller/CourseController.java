@@ -52,8 +52,7 @@ public class CourseController {
     public ResponseEntity<String> addStudent(@PathVariable String courseId,
             @PathVariable String studentId,
             @RequestBody(required = false) StudentCourseBean bean) {
-        if (bean == null)
-            bean = new StudentCourseBean();
+
         StudentCourseBean result = courseService.addStudent(courseId, studentId, bean);
         ObjectData data = new ObjectData()
                 .add("studentId", result.getStudentId())
