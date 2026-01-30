@@ -50,10 +50,9 @@ public class CourseController {
 
     @PostMapping("/{courseId}/students/{studentId}")
     public ResponseEntity<String> addStudent(@PathVariable String courseId,
-            @PathVariable String studentId,
-            @RequestBody(required = false) StudentCourseBean bean) {
-
-        StudentCourseBean result = courseService.addStudent(courseId, studentId, bean);
+                                             @PathVariable String studentId,
+                                             @Valid @RequestBody UpdateCourseRecordRequest bean) {
+        StudentCourseBean result = courseService.updateCourseRecord(studentId, courseId, bean);
         ObjectData data = new ObjectData()
                 .add("studentId", result.getStudentId())
                 .add("courseId", result.getCourseId())

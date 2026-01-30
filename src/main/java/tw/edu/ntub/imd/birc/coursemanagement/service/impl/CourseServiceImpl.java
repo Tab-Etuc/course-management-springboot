@@ -16,6 +16,8 @@ import tw.edu.ntub.imd.birc.coursemanagement.exception.NotFoundException;
 import tw.edu.ntub.imd.birc.coursemanagement.service.CourseService;
 import tw.edu.ntub.imd.birc.coursemanagement.service.transformer.impl.CourseTransformer;
 import tw.edu.ntub.imd.birc.coursemanagement.service.transformer.impl.StudentCourseTransformer;
+import tw.edu.ntub.imd.birc.coursemanagement.validation.EntityExistenceValidator;
+import tw.edu.ntub.imd.birc.coursemanagement.dto.UpdateCourseRecordRequest;
 
 import java.time.LocalDateTime;
 
@@ -26,21 +28,23 @@ public class CourseServiceImpl extends BaseServiceImpl<CourseBean, Course, Strin
     private final StudentCourseDAO studentCourseDAO;
     private final CourseTransformer courseTransformer;
     private final StudentCourseTransformer studentCourseTransformer;
+    private final EntityExistenceValidator entityExistenceValidator;
 
     public CourseServiceImpl(CourseDAO courseDAO,
             StudentDAO studentDAO,
             StudentCourseDAO studentCourseDAO,
             CourseTransformer courseTransformer,
-            StudentCourseTransformer studentCourseTransformer) {
+            StudentCourseTransformer studentCourseTransformer,
+            EntityExistenceValidator entityExistenceValidator) {
         super(courseDAO, courseTransformer);
         this.courseDAO = courseDAO;
         this.studentDAO = studentDAO;
         this.studentCourseDAO = studentCourseDAO;
         this.courseTransformer = courseTransformer;
         this.studentCourseTransformer = studentCourseTransformer;
+        this.entityExistenceValidator = entityExistenceValidator;
     }
 
-    @Transactional
     @Override
     public CourseBean save(CourseBean courseBean) {
         if (courseDAO.existsById(courseBean.getId())) {
@@ -50,15 +54,10 @@ public class CourseServiceImpl extends BaseServiceImpl<CourseBean, Course, Strin
         return courseTransformer.transferToBean(courseDAO.save(course));
     }
 
-    @Transactional
     @Override
     public StudentCourseBean addStudent(String courseId, String studentId, StudentCourseBean bean) {
-        if (!studentDAO.existsById(studentId)) {
-            throw new NotFoundException("找不到學生");
-        }
-        if (!courseDAO.existsById(courseId)) {
-            throw new NotFoundException("找不到課程");
-        }
+        entityExistenceValidator.validateStudentExists(studentId);
+        entityExistenceValidator.validateCourseExists(courseId);
 
         StudentCourseId id = new StudentCourseId();
         id.setStudentId(studentId);
@@ -78,5 +77,25 @@ public class CourseServiceImpl extends BaseServiceImpl<CourseBean, Course, Strin
         studentCourseDAO.save(entity);
 
         return studentCourseTransformer.transferToBean(entity);
+    }
+
+    @Override
+    public StudentCourseBean updateCourseRecord(String courseId, String studentId, UpdateCourseRecordRequest bean) {
+        entityExistenceValidator.validateStudentExists(studentId);
+        entityExistenceValidator.validateCourseExists(courseId);
+
+        StudentCourseId id = new StudentCourseId();
+        id.setStudentId(studentId);
+        id.setCourseId(courseId);
+
+        StudentCourse studentCourse = studentCourseDAO.findById(id)
+                .orElseThrow(() -> new NotFoundException("找不到該選課紀錄"));
+        
+        studentCourse.setGrade(bean.getGrade());
+        studentCourse.setRemark(bean.getRemark());
+        
+        studentCourseDAO.update(studentCourse);
+
+        return studentCourseTransformer.transferToBean(studentCourse);
     }
 }

@@ -18,7 +18,6 @@ public abstract class BaseServiceImpl<B, E, ID extends Serializable> extends Bas
         this.baseDAO = d;
     }
 
-    @Transactional
     @Override
     public void update(ID id, B b) {
         Optional<E> optional = baseDAO.findById(id);
@@ -31,7 +30,6 @@ public abstract class BaseServiceImpl<B, E, ID extends Serializable> extends Bas
         }
     }
 
-    @Transactional
     @Override
     public void delete(ID id) {
         baseDAO.deleteById(id);
